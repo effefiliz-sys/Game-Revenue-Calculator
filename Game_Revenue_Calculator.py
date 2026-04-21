@@ -1,3 +1,5 @@
+from Excel import save_to_excel
+
 Hun = 0.27 #Hungary
 Den = 0.25 #Denmark
 Tur = 0.20 #Turkey
@@ -92,3 +94,21 @@ Development_Spent = int(input("Enter the budget spent on the development process
 
 Process4 = process3 - Development_Spent
 print(Process4)
+
+User_Want_ExcelData = input("Do you want write this data to excel file ").lower()
+
+if User_Want_ExcelData.startswith("y"):
+    export_data = {
+    "Country": Which_Country,
+    "Platform": Which_Platform,
+    "Gross_Revenue": gross_revenue,
+    "Net_Profit": Process4,
+    "Tax_Amount": selected_tax,
+    "Store_Cut": process2
+    }
+
+    save_to_excel(export_data)
+else:
+    print("Excel writing has been refused ")
+
+print("Thankyou for using my program <3 ")
