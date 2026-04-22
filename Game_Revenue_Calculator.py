@@ -1,4 +1,5 @@
 from Excel import save_to_excel
+from Data import Data_Founder
 
 Hun = 0.27 #Hungary
 Den = 0.25 #Denmark
@@ -111,4 +112,17 @@ if User_Want_ExcelData.startswith("y"):
 else:
     print("Excel writing has been refused ")
 
+project_name = input("Please Enter Project Name ")
+Project_Date = input("Please Enter Project Creation Date ")
+
+Calculated_Data = {
+    "Project_Name": project_name,
+    "Income": Process4,
+    "Date": Project_Date
+}
+
+Data_Founder(Calculated_Data)
+
+print("___")
+print(f"Succesful '{project_name}' Project Added On Data ")
 print("Thankyou for using my program <3 ")
