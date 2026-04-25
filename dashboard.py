@@ -1,7 +1,7 @@
 import json
 import os
 
-from PyQt6.QtWidgets import QWidget, QVBoxLayout, QHBoxLayout, QPushButton, QLabel, QListWidget
+from PyQt6.QtWidgets import QWidget, QVBoxLayout, QHBoxLayout, QPushButton, QLabel, QListWidget, QCalendarWidget, QTextEdit, QFrame
 from PyQt6.QtCore import Qt
 from Project_dialog import ProjectDialog
 
@@ -10,7 +10,14 @@ class DashboardPage(QWidget):
         
         super().__init__()
         self.main_window = main_window
-        layout = QVBoxLayout()
+
+        self.main_h_layout = QHBoxLayout(self)
+        self.main_h_layout.setContentsMargins(10, 10, 10, 10)
+        self.main_h_layout.setSpacing(15)
+
+        self.left_container = QWidget()
+        self.left_layout = QVBoxLayout(self.left_container)
+        self.left_layout.setContentsMargins(0, 0, 0, 0)
 
         self.add_btn = QPushButton("+ New Project ")
         self.add_btn.setFixedSize(120, 35)
@@ -33,12 +40,44 @@ class DashboardPage(QWidget):
         header.addWidget(self.add_btn)
         header.addWidget(self.remove_btn)
 
-        layout.addLayout(header)
-        layout.addWidget(self.project_list)
-        self.setLayout(layout)
+        self.left_layout.addLayout(header)
+        self.left_layout.addWidget(self.project_list)
+
+        self.right_panel = QFrame()
+        self.right_panel.setFixedWidth(350)
+        self.right_panel.setStyleSheet("background-color: #252526; border-radius: 8px; border: 1px solid #333;")
+        self.right_layout = QVBoxLayout(self.right_panel)
+
+        self.calendar = QCalendarWidget()
+        self.calendar.setStyleSheet("""
+            QCalendarWidget QAbstractItemView:enabled { 
+                background-color: #1e1e1e; 
+                color: #d4d4d4; 
+                selection-background-color: #3d3d3d; 
+                selection-color: white;
+            }
+            QCalendarWidget QWidget { alternate-background-color: #252526; color: #aaa; }
+            QCalendarWidget QToolButton { color: white; border: none; font-weight: bold; }
+        """)
+
+        self.daily_notes = QTextEdit()
+        self.daily_notes.setPlaceholderText("Take Notes Here ")
+        self.daily_notes.textChanged.connect(self.save_notes)
+
+        self.daily_notes.setStyleSheet("background-color: #1e1e1e; color: white; border: none; padding: 10px;")
+
+        self.right_layout.addWidget(QLabel("Calendar"))
+        self.right_layout.addWidget(self.calendar)
+        self.right_layout.addWidget(QLabel("Notes"))
+        self.right_layout.addWidget(self.daily_notes)
+
+        self.main_h_layout.addWidget(self.left_container, stretch=65)
+        self.main_h_layout.addWidget(self.right_panel, stretch=35)
 
         self.load_Projects()
-        
+        self.load_notes()
+        self.daily_notes.textChanged.connect(self.save_notes)
+
     def open_create_dialog(self):
         dialog = ProjectDialog(self)
         if dialog.exec():
@@ -146,3 +185,13 @@ class DashboardPage(QWidget):
                     
         print("Debug: Dosya bulunamadı veya eşleşme yok!")
         return os.getcwd()
+    
+    def save_notes(self):
+        with open("notes.txt", "w", encoding="utf-8") as f:
+            f.write(self.daily_notes.toPlainText())
+
+    def load_notes(self):
+        if os.path.exists("notes.txt"):
+            with open("notes.txt", "r", encoding="utf-8") as f:
+                self.daily_notes.setPlainText(f.read())
+        self.daily_notes.setStyleSheet("background-color: #1e1e1e; color: white; font-size: 13px; padding: 10px; border: none;")
