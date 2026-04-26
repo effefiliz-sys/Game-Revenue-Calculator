@@ -2,7 +2,7 @@ import json
 import os
 
 from PyQt6.QtWidgets import QWidget, QVBoxLayout, QHBoxLayout, QPushButton, QLabel, QListWidget, QCalendarWidget, QTextEdit, QFrame
-from PyQt6.QtCore import Qt
+from PyQt6.QtCore import Qt, QDate
 from Project_dialog import ProjectDialog
 
 class DashboardPage(QWidget):
@@ -49,6 +49,7 @@ class DashboardPage(QWidget):
         self.right_layout = QVBoxLayout(self.right_panel)
 
         self.calendar = QCalendarWidget()
+        self.calendar.clicked.connect(self.load_notes)
         self.calendar.setStyleSheet("""
             QCalendarWidget QAbstractItemView:enabled { 
                 background-color: #1e1e1e; 
@@ -62,7 +63,6 @@ class DashboardPage(QWidget):
 
         self.daily_notes = QTextEdit()
         self.daily_notes.setPlaceholderText("Take Notes Here ")
-        self.daily_notes.textChanged.connect(self.save_notes)
 
         self.daily_notes.setStyleSheet("background-color: #1e1e1e; color: white; border: none; padding: 10px;")
 
@@ -164,7 +164,7 @@ class DashboardPage(QWidget):
 
         filename = os.path.join(current_dir, "projects.json") 
 
-        print(f"Debug: Bakılan dosya -> {filename}")
+        print(f"Debug: Viewed File -> {filename}")
 
         if os.path.exists(filename):
             with open(filename, "r", encoding="utf-8") as f:
@@ -183,15 +183,46 @@ class DashboardPage(QWidget):
                 except Exception as e:
                     print(f"Json Read Error: {e}")
                     
-        print("Debug: Dosya bulunamadı veya eşleşme yok!")
+        print("Debug: File not found or no match ")
         return os.getcwd()
     
     def save_notes(self):
-        with open("notes.txt", "w", encoding="utf-8") as f:
-            f.write(self.daily_notes.toPlainText())
+        date_str = self.calendar.selectedDate().toString("yyyy_MM_dd")
+        base_dir = os.path.dirname(os.path.abspath(__file__))
+        filename = os.path.join(base_dir, f"notes_{date_str}.txt")
 
-    def load_notes(self):
-        if os.path.exists("notes.txt"):
-            with open("notes.txt", "r", encoding="utf-8") as f:
-                self.daily_notes.setPlainText(f.read())
-        self.daily_notes.setStyleSheet("background-color: #1e1e1e; color: white; font-size: 13px; padding: 10px; border: none;")
+        try:
+            with open(filename, "w", encoding="utf-8") as f:
+                content = self.daily_notes.toPlainText()
+                f.write(content)
+                print(f"DEBUG: Saved -> {filename}")
+        except Exception as e:
+            print(f"DEBUG: Save Error -> {e}")
+
+    def load_notes(self, qdate=None):
+        if not isinstance(qdate, QDate):
+            qdate = self.calendar.selectedDate()
+
+        target_date = qdate if isinstance(qdate, QDate) else self.calendar.selectedDate()
+
+        date_str = target_date.toString("yyyy_MM_dd")
+        base_dir = os.path.dirname(os.path.abspath(__file__))
+        filename = os.path.join(base_dir, f"notes_{date_str}.txt")
+
+        self.daily_notes.blockSignals(True)
+        
+        if os.path.exists(filename):
+            try:
+                with open(filename, "r", encoding="utf-8") as f:
+                    self.daily_notes.setPlainText(f.read())
+                    print(f"DEBUG: Uploaded -> {filename}")
+            except Exception as e:
+                print(f"DEBUG: Reading Error -> {e}")
+            
+
+        else:
+            self.daily_notes.clear()
+            self.daily_notes.setPlaceholderText(f"{date_str} Make A Note For The Date ")
+            print(f"DEBUG File Not Found, Screen Cleanded: {filename}")
+
+        self.daily_notes.blockSignals(False)
